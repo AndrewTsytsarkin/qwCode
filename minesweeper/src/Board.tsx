@@ -14,7 +14,6 @@ const Board: React.FC<BoardProps> = ({ rows, cols, mineCount }) => {
   const [status, setStatus] = useState<GameStatus>('playing');
   const [flagCount, setFlagCount] = useState(0);
   const [timeElapsed, setTimeElapsed] = useState(0);
-  const [isFirstClick, setIsFirstClick] = useState(true);
 
   useEffect(() => {
     let timer: ReturnType<typeof setInterval>;
@@ -32,27 +31,7 @@ const Board: React.FC<BoardProps> = ({ rows, cols, mineCount }) => {
     const cell = board[row][col];
     if (cell.isRevealed || cell.isFlagged) return;
 
-    // First click - ensure it's not a mine
-    if (isFirstClick && cell.isMine) {
-      // Create new board with this cell guaranteed safe
-      let newBoard = createBoard(rows, cols, mineCount);
-      while (newBoard[row][col].isMine || newBoard[row][col].neighborCount > 0) {
-        newBoard = createBoard(rows, cols, mineCount);
-      }
-      setBoard(newBoard);
-      
-      // Reveal the clicked cell
-      newBoard = JSON.parse(JSON.stringify(newBoard)) as Cell[][];
-      revealCellLogic(newBoard, row, col);
-      setBoard([...newBoard]);
-      
-      if (checkWin(newBoard)) {
-        setStatus('won');
-      }
-      setIsFirstClick(false);
-      return;
-    }
-
+    // Если попали на мину - сразу проигрыш
     if (cell.isMine) {
       // Game over - reveal all mines
       const newBoard = revealAllMines(board);
@@ -61,7 +40,7 @@ const Board: React.FC<BoardProps> = ({ rows, cols, mineCount }) => {
       return;
     }
 
-    // Reveal the cell
+    // Открываем ячейку
     const newBoard = JSON.parse(JSON.stringify(board)) as Cell[][];
     revealCellLogic(newBoard, row, col);
     setBoard([...newBoard]);
@@ -70,7 +49,7 @@ const Board: React.FC<BoardProps> = ({ rows, cols, mineCount }) => {
     if (checkWin(newBoard)) {
       setStatus('won');
     }
-  }, [board, status, isFirstClick, rows, cols, mineCount]);
+  }, [board, status, rows, cols, mineCount]);
 
   const handleRightClick = useCallback((e: React.MouseEvent, row: number, col: number) => {
     e.preventDefault();
@@ -97,7 +76,6 @@ const Board: React.FC<BoardProps> = ({ rows, cols, mineCount }) => {
     setStatus('playing');
     setFlagCount(0);
     setTimeElapsed(0);
-    setIsFirstClick(true);
   };
 
   const formatTime = (seconds: number) => {
